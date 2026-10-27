@@ -24,7 +24,7 @@ FlatFlow is a single-society maintenance management application for residents an
 | Verified payments and receipts | Implemented, awaiting Razorpay test credentials | Server-side Razorpay orders, signed callback verification, captured-payment lookup, idempotent webhook settlement, resident payment history/receipts, and admin reconciliation listing are implemented. The full provider checkout has not been tested until valid test keys and webhook configuration are supplied. |
 | Bill disputes | Implemented and locally tested | Residents can dispute bills assigned to their flat and track review outcomes; admins can review, respond, resolve, or reject disputes. One open dispute is allowed per bill. |
 | In-app notifications | Implemented and locally tested | Authenticated users receive payment confirmations and resident dispute updates in a private inbox with unread count and read controls. |
-| Collection analytics | Planned | |
+| Collection analytics | Implemented and locally tested | Admins can view bill-derived billed, collected, outstanding, and overdue totals with monthly breakdowns over a validated range of up to 24 months. |
 | Deployment, full README, and demo | Planned | |
 
 ## Authentication API
@@ -53,12 +53,13 @@ FlatFlow is a single-society maintenance management application for residents an
 - `PATCH /api/admin/disputes/:disputeId` lets an admin move an open dispute to review or closure; a response is required to resolve or reject it. Closed disputes cannot be reopened.
 - `GET /api/notifications` returns the authenticated user's latest notifications and unread count; limit is capped at 50.
 - `PATCH /api/notifications/:notificationId/read` and `PATCH /api/notifications/read-all` mark only the authenticated user's notifications as read.
+- `GET /api/admin/analytics/collections` returns bill-count and paise totals for billed, collected, outstanding, and overdue amounts by billing month, plus range totals. Optional `from` and `to` use `YYYY-MM`; the range defaults to the latest 12 months and is capped at 24 months. Collected value is based on bills whose status is `paid`.
 - Payment configuration is server-only: `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`, and `RAZORPAY_WEBHOOK_SECRET` in the private backend environment file. Only the public key ID is returned to the frontend for checkout.
 
 ## Current limitations and next work
 
 - Resident accounts and flats can be administered by an admin; resident self-registration remains disabled.
-- The frontend currently provides basic sign-in, flat/resident management, bill generation and views, Razorpay checkout initiation, payment history, receipts, an admin reconciliation list, resident/admin dispute workflows, and an in-app notification inbox.
+- The frontend currently provides basic sign-in, flat/resident management, bill generation and views, collection analytics, Razorpay checkout initiation, payment history, receipts, an admin reconciliation list, resident/admin dispute workflows, and an in-app notification inbox.
 - Razorpay test checkout remains unverified until valid test credentials and a webhook secret are configured.
-- Collection analytics and deployment are not complete.
-- Next: configure Razorpay test credentials and verify the end-to-end gateway flow; then implement notifications and data-derived collection reports.
+- Deployment, end-to-end Razorpay test checkout, and a full README/demo remain to be completed.
+- Next: configure Razorpay test credentials for an end-to-end checkout test, then prepare deployment and project documentation.

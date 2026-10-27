@@ -47,6 +47,26 @@ button {
   overflow-x: auto;
 }
 
+.analytics-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  gap: 0.75rem;
+}
+
+.analytics-summary div {
+  padding: 0.75rem;
+  border: 1px solid #d5d7da;
+  border-radius: 0.35rem;
+}
+
+.analytics-summary dt {
+  font-weight: 600;
+}
+
+.analytics-summary dd {
+  margin: 0.35rem 0 0;
+}
+
 table {
   width: 100%;
   border-collapse: collapse;
