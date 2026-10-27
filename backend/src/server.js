@@ -1,12 +1,29 @@
 import "dotenv/config";
+import cookieParser from "cookie-parser";
+import cors from "cors";
 import express from "express";
 import mongoose from "mongoose";
+import "./models/Flat.js";
+import authRoutes from "./routes/authRoutes.js";
 
 const app = express();
 const port = process.env.PORT || 5000;
 const mongoUri = process.env.MONGODB_URI;
 
-app.use(express.json());
+if (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < 32) {
+  throw new Error("JWT_SECRET must be set to a random value of at least 32 characters.");
+}
+
+app.use(
+  cors({
+    origin: process.env.CLIENT_ORIGIN || "http://localhost:5173",
+    credentials: true,
+  }),
+);
+app.use(express.json({ limit: "10kb" }));
+app.use(cookieParser());
+
+app.use("/api/auth", authRoutes);
 
 app.get("/api/health", (request, response) => {
   const databaseConnected = mongoose.connection.readyState === 1;
@@ -15,6 +32,18 @@ app.get("/api/health", (request, response) => {
     status: databaseConnected ? "ok" : "unavailable",
     database: databaseConnected ? "connected" : "disconnected",
   });
+});
+
+app.use((error, request, response, next) => {
+  if (error.type === "entity.parse.failed") {
+    return response.status(400).json({ message: "Request body must contain valid JSON." });
+  }
+  if (error.type === "entity.too.large") {
+    return response.status(413).json({ message: "Request body is too large." });
+  }
+
+  console.error("API request failed:", error.message);
+  return response.status(500).json({ message: "An unexpected server error occurred." });
 });
 
 async function startServer() {
