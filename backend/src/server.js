@@ -6,6 +6,7 @@ import mongoose from "mongoose";
 import "./models/Flat.js";
 import adminRoutes from "./routes/adminRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
+import billRoutes from "./routes/billRoutes.js";
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -25,6 +26,7 @@ app.use(express.json({ limit: "10kb" }));
 app.use(cookieParser());
 
 app.use("/api/auth", authRoutes);
+app.use("/api/bills", billRoutes);
 app.use("/api/admin", adminRoutes);
 
 app.get("/api/health", (request, response) => {

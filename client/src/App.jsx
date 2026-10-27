@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import AdminPanel from "./AdminPanel.jsx";
+import BillingPanel from "./BillingPanel.jsx";
 
 const apiBaseUrl = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
@@ -93,7 +94,7 @@ function App() {
           <p>Signed in as {user.role}.</p>
           {user.flat && <p>Flat: {user.flat.wing} {user.flat.flatNumber}</p>}
           {user.role === "admin" && <AdminPanel />}
-          {user.role === "resident" && <p>Your resident dashboard will be added with the billing step.</p>}
+          {user.role === "resident" && <BillingPanel role="resident" />}
           <button type="button" onClick={handleLogout}>Log out</button>
         </section>
       ) : (
