@@ -94,7 +94,7 @@ function App() {
           <p>Signed in as {user.role}.</p>
           {user.flat && <p>Flat: {user.flat.wing} {user.flat.flatNumber}</p>}
           {user.role === "admin" && <AdminPanel />}
-          {user.role === "resident" && <BillingPanel role="resident" />}
+          {user.role === "resident" && <BillingPanel role="resident" user={user} />}
           <button type="button" onClick={handleLogout}>Log out</button>
         </section>
       ) : (

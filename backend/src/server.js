@@ -7,6 +7,8 @@ import "./models/Flat.js";
 import adminRoutes from "./routes/adminRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
 import billRoutes from "./routes/billRoutes.js";
+import paymentRoutes from "./routes/paymentRoutes.js";
+import { handleRazorpayWebhook } from "./controllers/paymentController.js";
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -22,11 +24,17 @@ app.use(
     credentials: true,
   }),
 );
+app.post(
+  "/api/payments/webhook",
+  express.raw({ type: "application/json", limit: "1mb" }),
+  handleRazorpayWebhook,
+);
 app.use(express.json({ limit: "10kb" }));
 app.use(cookieParser());
 
 app.use("/api/auth", authRoutes);
 app.use("/api/bills", billRoutes);
+app.use("/api/payments", paymentRoutes);
 app.use("/api/admin", adminRoutes);
 
 app.get("/api/health", (request, response) => {

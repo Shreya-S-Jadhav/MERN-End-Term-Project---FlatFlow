@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import AdminPaymentReview from "./AdminPaymentReview.jsx";
 import BillingPanel from "./BillingPanel.jsx";
 
 const apiBaseUrl = import.meta.env.VITE_API_URL || "http://localhost:5000";
@@ -196,6 +197,7 @@ function AdminPanel() {
       {notice && <p role="status">{notice}</p>}
       {error && <p role="alert">{error}</p>}
       <BillingPanel role="admin" />
+      <AdminPaymentReview />
     </section>
   );
 }

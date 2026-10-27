@@ -21,7 +21,7 @@ FlatFlow is a single-society maintenance management application for residents an
 | Admin account setup | Implemented | An explicit CLI bootstrap creates the first admin from local environment variables. |
 | Resident/flat administration | Implemented and locally tested | Admin-only APIs and the admin screen add flats and create residents assigned to a flat. Duplicate flats and email addresses are rejected; resident access to admin APIs is denied. |
 | Maintenance billing and search | Implemented and locally tested | Admins generate monthly bills for active flats; unique flat/period indexing makes generation safe to rerun. Residents only see their assigned flat's bills. Admin and resident views support validated filters and pagination. |
-| Verified payments and receipts | Planned | Razorpay test mode, subject to account availability. |
+| Verified payments and receipts | Implemented, awaiting Razorpay test credentials | Server-side Razorpay orders, signed callback verification, captured-payment lookup, idempotent webhook settlement, resident payment history/receipts, and admin reconciliation listing are implemented. The full provider checkout has not been tested until valid test keys and webhook configuration are supplied. |
 | Disputes, notifications, and analytics | Planned | |
 | Deployment, full README, and demo | Planned | |
 
@@ -40,10 +40,17 @@ FlatFlow is a single-society maintenance management application for residents an
 - `GET /api/admin/bills` lists all society bills for admins; `GET /api/bills/my-bills` returns only the authenticated resident's flat bills.
 - Bill list filters include `q`, `status` (`unpaid`, `overdue`, or `paid`), `billingPeriod`, `dueFrom`, `dueTo`, `minAmount`, `maxAmount`, `sort`, `order`, `page`, and `limit`. Search text is escaped and restricted to bill number, flat, wing, and (admin only) resident identity. Page size is capped at 100.
 - Bill amounts are stored as integer paise. Overdue status is derived from the due date in the society's Asia/Kolkata calendar; it is not separately stored.
+- `POST /api/payments/create-order` is resident-only and creates a Razorpay order using the stored bill amount; the amount submitted by the browser is never trusted.
+- `POST /api/payments/verify` checks the Razorpay checkout HMAC, fetches the payment from Razorpay, and accepts only captured payments matching the stored order amount/currency. Bill/payment updates use a MongoDB transaction. Repeated verification is idempotent; an additional captured payment for an already-paid bill is recorded for admin reconciliation.
+- `POST /api/payments/webhook` validates Razorpay's HMAC against the exact raw request body and processes `payment.captured` events idempotently.
+- `GET /api/payments/my-payments` lists the authenticated resident's attempts; `GET /api/payments/:paymentId/receipt` serves a printable receipt only for a verified payment owned by that resident.
+- `GET /api/admin/payments` lists payment records for admins and supports status filters (`pending`, `verified`, `reconciliation_required`) plus a limit capped at 100.
+- Payment configuration is server-only: `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`, and `RAZORPAY_WEBHOOK_SECRET` in the private backend environment file. Only the public key ID is returned to the frontend for checkout.
 
 ## Current limitations and next work
 
 - Resident accounts and flats can be administered by an admin; resident self-registration remains disabled.
-- The frontend currently provides basic sign-in, flat/resident management, bill generation, and bill views.
-- Payments, disputes, notifications, reporting, and deployment are not complete.
-- Next: implement verified test payments and receipts, then disputes and data-derived reports.
+- The frontend currently provides basic sign-in, flat/resident management, bill generation and views, Razorpay checkout initiation, payment history, receipts, and an admin reconciliation list.
+- Razorpay test checkout remains unverified until valid test credentials and a webhook secret are configured.
+- Disputes, notifications, collection analytics, and deployment are not complete.
+- Next: configure Razorpay test credentials and verify the end-to-end gateway flow; then implement disputes and data-derived reports.

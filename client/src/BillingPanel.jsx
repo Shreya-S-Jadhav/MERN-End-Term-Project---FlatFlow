@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import PaymentHistory from "./PaymentHistory.jsx";
 
 const apiBaseUrl = import.meta.env.VITE_API_URL || "http://localhost:5000";
 const today = new Intl.DateTimeFormat("en-CA", {
@@ -9,13 +10,37 @@ const today = new Intl.DateTimeFormat("en-CA", {
 }).format(new Date());
 const currentPeriod = today.slice(0, 7);
 const currency = new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR" });
+let razorpayScriptPromise;
 
-function BillingPanel({ role }) {
+function loadRazorpayCheckout() {
+  if (window.Razorpay) return Promise.resolve();
+
+  if (!razorpayScriptPromise) {
+    razorpayScriptPromise = new Promise((resolve, reject) => {
+      const script = document.createElement("script");
+      script.src = "https://checkout.razorpay.com/v1/checkout.js";
+      script.async = true;
+      script.dataset.flatflowRazorpay = "true";
+      script.onload = () => resolve();
+      script.onerror = () => {
+        razorpayScriptPromise = null;
+        reject(new Error("Unable to load the Razorpay checkout."));
+      };
+      document.body.appendChild(script);
+    });
+  }
+
+  return razorpayScriptPromise;
+}
+
+function BillingPanel({ role, user }) {
   const isAdmin = role === "admin";
   const [bills, setBills] = useState([]);
   const [pagination, setPagination] = useState(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [payingBillId, setPayingBillId] = useState("");
+  const [paymentHistoryRefresh, setPaymentHistoryRefresh] = useState(0);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
 
@@ -83,6 +108,79 @@ function BillingPanel({ role }) {
       if (value) filters.set(key, value);
     }
     loadBills(filters);
+  }
+
+  async function handlePayBill(bill) {
+    setPayingBillId(bill.id);
+    setError("");
+    setNotice("");
+    let checkoutOpened = false;
+
+    try {
+      const orderResponse = await fetch(`${apiBaseUrl}/api/payments/create-order`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ billId: bill.id }),
+      });
+      const order = await orderResponse.json();
+      if (!orderResponse.ok) throw new Error(order.message || "Unable to start the payment.");
+
+      await loadRazorpayCheckout();
+      const checkout = new window.Razorpay({
+        key: order.keyId,
+        amount: order.amountPaise,
+        currency: order.currency,
+        name: "FlatFlow",
+        description: `Maintenance bill ${order.billNumber}`,
+        order_id: order.orderId,
+        prefill: { name: user?.name || "", email: user?.email || "" },
+        theme: { color: "#2563eb" },
+        handler: async (gatewayResult) => {
+          try {
+            const verifyResponse = await fetch(`${apiBaseUrl}/api/payments/verify`, {
+              method: "POST",
+              credentials: "include",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(gatewayResult),
+            });
+            const result = await verifyResponse.json();
+            if (!verifyResponse.ok && verifyResponse.status !== 202) {
+              throw new Error(result.message || "Payment verification is still pending.");
+            }
+            setNotice(result.message);
+            await loadBills();
+            setPaymentHistoryRefresh((version) => version + 1);
+          } catch (verificationError) {
+            setError(
+              `${verificationError.message || "Payment verification failed."} Your bill will remain unpaid until the server confirms the payment.`,
+            );
+            setPaymentHistoryRefresh((version) => version + 1);
+          } finally {
+            setPayingBillId("");
+          }
+        },
+        modal: {
+          ondismiss: () => {
+            setNotice("Checkout closed. The bill remains unpaid until payment is verified.");
+            setPaymentHistoryRefresh((version) => version + 1);
+            setPayingBillId("");
+          },
+        },
+      });
+
+      checkout.on("payment.failed", () => {
+        setNotice("The gateway reported a failed payment. The bill remains unpaid.");
+        setPaymentHistoryRefresh((version) => version + 1);
+        setPayingBillId("");
+      });
+      checkout.open();
+      checkoutOpened = true;
+    } catch (paymentError) {
+      setError(paymentError.message || "Unable to start the payment.");
+    } finally {
+      if (!checkoutOpened) setPayingBillId("");
+    }
   }
 
   return (
@@ -206,7 +304,18 @@ function BillingPanel({ role }) {
                     <td>{currency.format(bill.amountPaise / 100)}</td>
                     <td>{bill.issueDate}</td>
                     <td>{bill.dueDate}</td>
-                    <td>{bill.status}</td>
+                    <td>
+                      {bill.status}
+                      {!isAdmin && bill.status !== "paid" && (
+                        <button
+                          type="button"
+                          disabled={payingBillId === bill.id}
+                          onClick={() => handlePayBill(bill)}
+                        >
+                          {payingBillId === bill.id ? "Starting..." : "Pay now"}
+                        </button>
+                      )}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -214,6 +323,7 @@ function BillingPanel({ role }) {
           </div>
         </>
       )}
+      {!isAdmin && <PaymentHistory refreshVersion={paymentHistoryRefresh} />}
     </section>
   );
 }
