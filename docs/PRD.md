@@ -22,7 +22,8 @@ FlatFlow is a single-society maintenance management application for residents an
 | Resident/flat administration | Implemented and locally tested | Admin-only APIs and the admin screen add flats and create residents assigned to a flat. Duplicate flats and email addresses are rejected; resident access to admin APIs is denied. |
 | Maintenance billing and search | Implemented and locally tested | Admins generate monthly bills for active flats; unique flat/period indexing makes generation safe to rerun. Residents only see their assigned flat's bills. Admin and resident views support validated filters and pagination. |
 | Verified payments and receipts | Implemented, awaiting Razorpay test credentials | Server-side Razorpay orders, signed callback verification, captured-payment lookup, idempotent webhook settlement, resident payment history/receipts, and admin reconciliation listing are implemented. The full provider checkout has not been tested until valid test keys and webhook configuration are supplied. |
-| Disputes, notifications, and analytics | Planned | |
+| Bill disputes | Implemented and locally tested | Residents can dispute bills assigned to their flat and track review outcomes; admins can review, respond, resolve, or reject disputes. One open dispute is allowed per bill. |
+| Notifications and analytics | Planned | |
 | Deployment, full README, and demo | Planned | |
 
 ## Authentication API
@@ -45,12 +46,16 @@ FlatFlow is a single-society maintenance management application for residents an
 - `POST /api/payments/webhook` validates Razorpay's HMAC against the exact raw request body and processes `payment.captured` events idempotently.
 - `GET /api/payments/my-payments` lists the authenticated resident's attempts; `GET /api/payments/:paymentId/receipt` serves a printable receipt only for a verified payment owned by that resident.
 - `GET /api/admin/payments` lists payment records for admins and supports status filters (`pending`, `verified`, `reconciliation_required`) plus a limit capped at 100.
+- `POST /api/bills/disputes` lets a resident dispute a bill assigned to their flat with a category, subject, and description. Only one open or under-review dispute may exist per bill.
+- `GET /api/bills/my-disputes` returns the authenticated resident's disputes and admin responses.
+- `GET /api/admin/disputes` lists disputes for admins and accepts an optional status filter (`open`, `under_review`, `resolved`, `rejected`) and a limit capped at 100.
+- `PATCH /api/admin/disputes/:disputeId` lets an admin move an open dispute to review or closure; a response is required to resolve or reject it. Closed disputes cannot be reopened.
 - Payment configuration is server-only: `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`, and `RAZORPAY_WEBHOOK_SECRET` in the private backend environment file. Only the public key ID is returned to the frontend for checkout.
 
 ## Current limitations and next work
 
 - Resident accounts and flats can be administered by an admin; resident self-registration remains disabled.
-- The frontend currently provides basic sign-in, flat/resident management, bill generation and views, Razorpay checkout initiation, payment history, receipts, and an admin reconciliation list.
+- The frontend currently provides basic sign-in, flat/resident management, bill generation and views, Razorpay checkout initiation, payment history, receipts, an admin reconciliation list, and resident/admin dispute workflows.
 - Razorpay test checkout remains unverified until valid test credentials and a webhook secret are configured.
-- Disputes, notifications, collection analytics, and deployment are not complete.
-- Next: configure Razorpay test credentials and verify the end-to-end gateway flow; then implement disputes and data-derived reports.
+- Notifications, collection analytics, and deployment are not complete.
+- Next: configure Razorpay test credentials and verify the end-to-end gateway flow; then implement notifications and data-derived collection reports.

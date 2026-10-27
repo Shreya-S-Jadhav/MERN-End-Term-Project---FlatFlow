@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import PaymentHistory from "./PaymentHistory.jsx";
+import ResidentDisputes from "./ResidentDisputes.jsx";
 
 const apiBaseUrl = import.meta.env.VITE_API_URL || "http://localhost:5000";
 const today = new Intl.DateTimeFormat("en-CA", {
@@ -324,6 +325,7 @@ function BillingPanel({ role, user }) {
         </>
       )}
       {!isAdmin && <PaymentHistory refreshVersion={paymentHistoryRefresh} />}
+      {!isAdmin && <ResidentDisputes bills={bills} />}
     </section>
   );
 }

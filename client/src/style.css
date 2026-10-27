@@ -30,6 +30,7 @@ label {
 
 input,
 select,
+textarea,
 button {
   box-sizing: border-box;
   max-width: 100%;

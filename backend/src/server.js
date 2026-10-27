@@ -7,6 +7,7 @@ import "./models/Flat.js";
 import adminRoutes from "./routes/adminRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
 import billRoutes from "./routes/billRoutes.js";
+import disputeRoutes from "./routes/disputeRoutes.js";
 import paymentRoutes from "./routes/paymentRoutes.js";
 import { handleRazorpayWebhook } from "./controllers/paymentController.js";
 
@@ -34,6 +35,7 @@ app.use(cookieParser());
 
 app.use("/api/auth", authRoutes);
 app.use("/api/bills", billRoutes);
+app.use("/api/bills", disputeRoutes);
 app.use("/api/payments", paymentRoutes);
 app.use("/api/admin", adminRoutes);
 
