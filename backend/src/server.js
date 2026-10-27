@@ -2,6 +2,9 @@ import "dotenv/config";
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import express from "express";
+import { existsSync } from "node:fs";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import mongoose from "mongoose";
 import "./models/Flat.js";
 import adminRoutes from "./routes/adminRoutes.js";
@@ -15,17 +18,30 @@ import { handleRazorpayWebhook } from "./controllers/paymentController.js";
 const app = express();
 const port = process.env.PORT || 5000;
 const mongoUri = process.env.MONGODB_URI;
+const clientBuildDirectory = resolve(dirname(fileURLToPath(import.meta.url)), "../../client/dist");
+const clientIndexPath = resolve(clientBuildDirectory, "index.html");
+
+if (process.env.NODE_ENV === "production") {
+  app.set("trust proxy", 1);
+  if (!existsSync(clientIndexPath)) {
+    throw new Error("The frontend build is missing. Run the client production build before starting the API.");
+  }
+}
 
 if (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < 32) {
   throw new Error("JWT_SECRET must be set to a random value of at least 32 characters.");
 }
 
-app.use(
-  cors({
-    origin: process.env.CLIENT_ORIGIN || "http://localhost:5173",
-    credentials: true,
-  }),
-);
+const clientOrigin =
+  process.env.CLIENT_ORIGIN || (process.env.NODE_ENV === "production" ? "" : "http://localhost:5173");
+if (clientOrigin) {
+  app.use(
+    cors({
+      origin: clientOrigin,
+      credentials: true,
+    }),
+  );
+}
 app.post(
   "/api/payments/webhook",
   express.raw({ type: "application/json", limit: "1mb" }),
@@ -49,6 +65,19 @@ app.get("/api/health", (request, response) => {
     database: databaseConnected ? "connected" : "disconnected",
   });
 });
+
+if (process.env.NODE_ENV === "production") {
+  app.use(express.static(clientBuildDirectory, { index: false, maxAge: "1y", immutable: true }));
+  app.use((request, response, next) => {
+    if (request.method !== "GET" || request.path.startsWith("/api/") || !request.accepts("html")) {
+      return next();
+    }
+
+    return response.sendFile(clientIndexPath, (error) => {
+      if (error) next(error);
+    });
+  });
+}
 
 app.use((error, request, response, next) => {
   if (error.type === "entity.parse.failed") {

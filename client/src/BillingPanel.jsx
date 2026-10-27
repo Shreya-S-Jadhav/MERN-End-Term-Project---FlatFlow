@@ -1,8 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import PaymentHistory from "./PaymentHistory.jsx";
 import ResidentDisputes from "./ResidentDisputes.jsx";
-
-const apiBaseUrl = import.meta.env.VITE_API_URL || "http://localhost:5000";
+import { apiBaseUrl } from "./api.js";
 const today = new Intl.DateTimeFormat("en-CA", {
   timeZone: "Asia/Kolkata",
   year: "numeric",

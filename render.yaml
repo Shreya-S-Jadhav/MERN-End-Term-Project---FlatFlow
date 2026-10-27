@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: flatflow
+    runtime: node
+    plan: free
+    buildCommand: npm ci --prefix backend && npm ci --prefix client && npm run build --prefix client
+    startCommand: npm start --prefix backend
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: MONGODB_URI
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true

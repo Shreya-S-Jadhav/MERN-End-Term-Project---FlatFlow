@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-
-const apiBaseUrl = import.meta.env.VITE_API_URL || "http://localhost:5000";
+import { apiBaseUrl } from "./api.js";
 
 function NotificationCenter() {
   const [notifications, setNotifications] = useState([]);

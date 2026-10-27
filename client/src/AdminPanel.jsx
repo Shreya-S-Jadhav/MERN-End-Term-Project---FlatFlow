@@ -3,8 +3,7 @@ import AdminDisputeReview from "./AdminDisputeReview.jsx";
 import AdminPaymentReview from "./AdminPaymentReview.jsx";
 import BillingPanel from "./BillingPanel.jsx";
 import CollectionAnalytics from "./CollectionAnalytics.jsx";
-
-const apiBaseUrl = import.meta.env.VITE_API_URL || "http://localhost:5000";
+import { apiBaseUrl } from "./api.js";
 
 async function adminRequest(path, options = {}) {
   const response = await fetch(`${apiBaseUrl}${path}`, {

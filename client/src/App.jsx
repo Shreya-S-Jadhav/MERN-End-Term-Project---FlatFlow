@@ -2,8 +2,7 @@ import { useEffect, useState } from "react";
 import AdminPanel from "./AdminPanel.jsx";
 import BillingPanel from "./BillingPanel.jsx";
 import NotificationCenter from "./NotificationCenter.jsx";
-
-const apiBaseUrl = import.meta.env.VITE_API_URL || "http://localhost:5000";
+import { apiBaseUrl } from "./api.js";
 
 function App() {
   const [user, setUser] = useState(null);

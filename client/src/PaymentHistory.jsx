@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
-
-const apiBaseUrl = import.meta.env.VITE_API_URL || "http://localhost:5000";
+import { apiBaseUrl } from "./api.js";
 const currency = new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR" });
 
 function PaymentHistory({ refreshVersion }) {

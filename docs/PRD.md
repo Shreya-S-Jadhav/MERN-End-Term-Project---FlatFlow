@@ -25,7 +25,7 @@ FlatFlow is a single-society maintenance management application for residents an
 | Bill disputes | Implemented and locally tested | Residents can dispute bills assigned to their flat and track review outcomes; admins can review, respond, resolve, or reject disputes. One open dispute is allowed per bill. |
 | In-app notifications | Implemented and locally tested | Authenticated users receive payment confirmations and resident dispute updates in a private inbox with unread count and read controls. |
 | Collection analytics | Implemented and locally tested | Admins can view bill-derived billed, collected, outstanding, and overdue totals with monthly breakdowns over a validated range of up to 24 months. |
-| Deployment, full README, and demo | Planned | |
+| Render deployment preparation, README, and demo guide | Prepared, not deployed | A single-origin Render Blueprint, production static serving, setup guide, and presenter walkthrough are ready. Live hosting still requires account setup, MongoDB network access, and deployment. |
 
 ## Authentication API
 
@@ -61,5 +61,5 @@ FlatFlow is a single-society maintenance management application for residents an
 - Resident accounts and flats can be administered by an admin; resident self-registration remains disabled.
 - The frontend currently provides basic sign-in, flat/resident management, bill generation and views, collection analytics, Razorpay checkout initiation, payment history, receipts, an admin reconciliation list, resident/admin dispute workflows, and an in-app notification inbox.
 - Razorpay test checkout remains unverified until valid test credentials and a webhook secret are configured.
-- Deployment, end-to-end Razorpay test checkout, and a full README/demo remain to be completed.
-- Next: configure Razorpay test credentials for an end-to-end checkout test, then prepare deployment and project documentation.
+- A live deployment and end-to-end Razorpay test checkout have not yet been performed. The hosting configuration and project documentation are prepared.
+- Next: deploy the Render Blueprint with private database settings, then verify the hosted app; configure Razorpay test credentials only if a real test-mode checkout demo is needed.
