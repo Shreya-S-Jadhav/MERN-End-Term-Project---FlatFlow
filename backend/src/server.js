@@ -8,6 +8,7 @@ import adminRoutes from "./routes/adminRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
 import billRoutes from "./routes/billRoutes.js";
 import disputeRoutes from "./routes/disputeRoutes.js";
+import notificationRoutes from "./routes/notificationRoutes.js";
 import paymentRoutes from "./routes/paymentRoutes.js";
 import { handleRazorpayWebhook } from "./controllers/paymentController.js";
 
@@ -37,6 +38,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/bills", billRoutes);
 app.use("/api/bills", disputeRoutes);
 app.use("/api/payments", paymentRoutes);
+app.use("/api/notifications", notificationRoutes);
 app.use("/api/admin", adminRoutes);
 
 app.get("/api/health", (request, response) => {

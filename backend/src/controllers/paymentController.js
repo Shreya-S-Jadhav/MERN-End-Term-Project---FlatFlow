@@ -1,6 +1,7 @@
 import crypto from "node:crypto";
 import mongoose from "mongoose";
 import Bill from "../models/Bill.js";
+import { createNotification } from "../services/notifications.js";
 import Payment from "../models/Payment.js";
 import { getRazorpayClient, verifyPaymentSignature, verifyWebhookSignature } from "../services/razorpay.js";
 
@@ -60,6 +61,17 @@ async function settleCapturedPayment(orderId, paymentId) {
         await bill.save({ session });
         payment.status = "verified";
         await payment.save({ session });
+        await createNotification(
+          {
+            recipient: payment.resident,
+            type: "payment_verified",
+            title: "Payment confirmed",
+            message: `Your payment of INR ${(payment.amountPaise / 100).toFixed(2)} for bill ${bill.billNumber} is confirmed.`,
+            link: "#bills-heading",
+            eventKey: `payment-verified:${payment._id}`,
+          },
+          session,
+        );
         outcome = { kind: "verified", payment };
         return;
       }

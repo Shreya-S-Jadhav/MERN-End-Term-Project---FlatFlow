@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import Bill from "../models/Bill.js";
 import Dispute from "../models/Dispute.js";
+import { createNotification } from "../services/notifications.js";
 
 const categories = new Set(["incorrect_amount", "payment_issue", "bill_details", "other"]);
 const adminStatuses = new Set(["under_review", "resolved", "rejected"]);
@@ -189,22 +190,44 @@ export async function updateAdminDispute(request, response) {
   const parsed = validateDisputeUpdate(request.body, dispute.status);
   if (parsed.error) return response.status(400).json({ message: parsed.error });
 
-  const update = {
-    $set: {
-      status: parsed.update.status,
-      adminResponse: parsed.update.adminResponse,
-      reviewedBy: request.user._id,
-    },
-  };
-  if (parsed.update.status === "resolved" || parsed.update.status === "rejected") {
-    update.$set.closedAt = new Date();
-    update.$unset = { activeBill: "" };
+  const session = await mongoose.startSession();
+  let updatedDispute;
+  try {
+    await session.withTransaction(async () => {
+      const update = {
+        $set: {
+          status: parsed.update.status,
+          adminResponse: parsed.update.adminResponse,
+          reviewedBy: request.user._id,
+          updatedAt: new Date(),
+        },
+      };
+      if (parsed.update.status === "resolved" || parsed.update.status === "rejected") {
+        update.$set.closedAt = new Date();
+        update.$unset = { activeBill: "" };
+      }
+      updatedDispute = await Dispute.findOneAndUpdate(
+        { _id: dispute._id, status: dispute.status, updatedAt: dispute.updatedAt },
+        update,
+        { new: true, runValidators: true, session },
+      );
+      if (!updatedDispute) return;
+
+      await createNotification(
+        {
+          recipient: updatedDispute.resident,
+          type: "dispute_updated",
+          title: "Bill dispute updated",
+          message: `Your dispute "${updatedDispute.subject}" is ${updatedDispute.status.replaceAll("_", " ")}. Admin response: ${(updatedDispute.adminResponse || "Your dispute is under review.").slice(0, 300)}`,
+          link: "#resident-disputes-heading",
+          eventKey: `dispute-updated:${updatedDispute._id}:${updatedDispute.updatedAt.toISOString()}`,
+        },
+        session,
+      );
+    });
+  } finally {
+    await session.endSession();
   }
-  const updatedDispute = await Dispute.findOneAndUpdate(
-    { _id: dispute._id, status: dispute.status },
-    update,
-    { new: true, runValidators: true },
-  );
   if (!updatedDispute) {
     return response.status(409).json({ message: "The dispute changed while you were reviewing it. Reload and try again." });
   }
