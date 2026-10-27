@@ -4,6 +4,7 @@ import cors from "cors";
 import express from "express";
 import mongoose from "mongoose";
 import "./models/Flat.js";
+import adminRoutes from "./routes/adminRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
 
 const app = express();
@@ -24,6 +25,7 @@ app.use(express.json({ limit: "10kb" }));
 app.use(cookieParser());
 
 app.use("/api/auth", authRoutes);
+app.use("/api/admin", adminRoutes);
 
 app.get("/api/health", (request, response) => {
   const databaseConnected = mongoose.connection.readyState === 1;
